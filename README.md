@@ -46,7 +46,7 @@ aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AmazonSSMFullAcc
 aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/EC2InstanceConnect --user-name <AWS IAM user name>
 ```
 * If you get an AccessDenied error, you will have to attach the policies through the IAM Dashboard.
-*  
+
 # Notes
 * If your AWS account has the max amount of VPC's that you are allowed this will not work due to the fact that a new VPC cannot be created. The error will look like this if that is the case:
  ``` shell
