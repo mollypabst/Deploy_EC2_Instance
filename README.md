@@ -11,8 +11,7 @@ pip install boto3 awscli pyyaml
 ```
 
 # AWS Requirements
-In order to use this script you need an AWS account, a key pair, and a security group. Details on how to obtain these features can be found in the [AWS EC2 Documentation.](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/get-set-up-for-amazon-ec2.html) 
-You will also need an IAM User that has programmatic access as well as the 'AmazonEC2FullAccess' and 'AmazonSSMFullAccess' policies attached. If you need to create a new IAM user, please refer to this [link. ](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)If you already have an existing user but need to grant programmatic access follow these steps:
+In order to use this script you need an AWS account. You will also need an IAM User that has programmatic access as well as the 'AmazonEC2FullAccess' , 'AmazonSSMFullAccess', and 'EC2InstanceConnect' policies attached. If you need to create a new IAM user, please refer to this [link. ](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)If you already have an existing user but need to grant programmatic access follow these steps:
 
 1. Navigate to the "Users" page
 2. Find the user you wish to grant programmatic access to, select the user, which will open the details page for that user.
@@ -28,6 +27,26 @@ aws configure
 ```
 Enter the IAM User access key and secret key when prompted, as well as the default region and default output format if you wish. 
 
+If you need to attach policies, refer follow these steps 
+1. Go to the IAM Dashboard
+2. Click users on the left-hand side and click your username
+3. Click "Add permissions" and select "Attach existing policies directly"
+4. Search for 'AmazonEC2FullAccess', 'AmazonSSMFullAccess', and 'EC2InstanceConnect' and select the checkbox next to them
+5. Click 'Next: review' and select 'Add permissions'
+
+If your IAM user has permissions to do so, you can attach these policies via the command line
+
+``` shell
+aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess --user-name <AWS IAM user name>
+```
+``` shell
+aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AmazonSSMFullAccess --user-name <AWS IAM user name>
+```
+```shell
+aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/EC2InstanceConnect --user-name <AWS IAM user name>
+```
+* If you get an AccessDenied error, you will have to attach the policies through the IAM Dashboard.
+*  
 # Notes
 * If your AWS account has the max amount of VPC's that you are allowed this will not work due to the fact that a new VPC cannot be created. The error will look like this if that is the case:
  ``` shell
