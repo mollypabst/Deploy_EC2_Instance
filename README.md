@@ -55,7 +55,13 @@ An error occurred (VpcLimitExceeded) when calling the CreateVpc operation: The m
 Please delete a VPC or create a new AWS account to solve this issue if applicable.
 
 # Use
-Once the instance IP address is printed you can ssh into using this command
+To start, clone the repository to get the script and YAML configuration or download the files directly from [the repository.](https://github.com/mollypabst/Deploy_EC2_Instance.git)
+``` shell
+gh repo clone mollypabst/Deploy_EC2_Instance
+```
+Once you have the files, run the script and it will perform various tasks to create an EC2 instance, attach volumes, and add SSH users based on the YAML configuration. Feel free to change the YAML configuration, the script will handle new changes. The great thing about the script is that you do not have to paste the user's SSH key into the config file, the script automatically creates a key and puts it into the authorized_keys file of the user for convenience. 
+
+Once the instance IP address is printed you can SSH into your new instance using this command
 ``` shell
 ssh -i FETCH_REWARDS_KEY.pem username@provided-IPv6-address
 ``` 
