@@ -54,6 +54,8 @@ An error occurred (VpcLimitExceeded) when calling the CreateVpc operation: The m
 ```
 Please delete a VPC or create a new AWS account to solve this issue if applicable.
 
+* Your aws configuration needs to have a region specified. If you need to check or add a region run the 'aws configure' command and enter your region. Example regions are us-east-1, us-west-1, etc.
+
 # Use
 To start, clone the repository to get the script and YAML configuration or download the files directly from [the repository.](https://github.com/mollypabst/Deploy_EC2_Instance.git)
 ``` shell
