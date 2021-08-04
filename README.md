@@ -76,4 +76,4 @@ To list the available disks, call this command:
 ``` shell
 lsblk
 ```
-* If you would like to run this script again you will have to delete the FETCH_REWARDS_KEY.pem file locally as well as in the AWS key pair dashboard. You will also need to delete the 'fetch_security' security group.
+If you would like to run this script again you will have to delete the FETCH_REWARDS_KEY.pem file locally as well as in the AWS key pair dashboard. You will also need to delete the 'fetch_security' security group.
