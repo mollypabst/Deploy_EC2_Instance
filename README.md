@@ -27,7 +27,7 @@ aws configure
 ```
 Enter the IAM User access key and secret key when prompted, as well as the default region and default output format if you wish. 
 
-If you need to attach policies, refer follow these steps 
+If you need to attach policies, refer to these steps 
 1. Go to the IAM Dashboard
 2. Click users on the left-hand side and click your username
 3. Click "Add permissions" and select "Attach existing policies directly"
