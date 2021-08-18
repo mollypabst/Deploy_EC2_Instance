@@ -6,7 +6,7 @@ from sys import platform
 # open configuration file and store data
 with open('fetch.yaml', 'r') as stream:
     try:
-        yaml_data = yaml.safe_load(stream)
+        yaml_data = yaml.safe_load(stream) # stores data into dictionary
     except yaml.YAMLError as e:
         print(e)
 
@@ -38,9 +38,9 @@ class EC2():
         )
         # pull just the AMI ID from the dictionary
         self.ami_id = self.ami_id_dict['Parameters'][0]['Value']
-        self.ec2_client = boto3.client('ec2')
-        self.ec2_resource = boto3.resource('ec2')
-        self.userData = '#!/bin/bash\n'
+        self.ec2_client = boto3.client('ec2') # lower level interface to AWS
+        self.ec2_resource = boto3.resource('ec2') # has attributes, identifiers, and actions but doesnt have certain functions like client does
+        self.userData = '#!/bin/bash\n' # invoke shell to call all commands after this line
 
     def create_key_pair(self):
         name = self.name + '_KEY'
@@ -70,37 +70,37 @@ class EC2():
         self.ec2_client.authorize_security_group_ingress(
                 GroupId= self.security_group_id,
                 IpPermissions=[
-                    {'IpProtocol': 'tcp',
+                    {'IpProtocol': 'tcp', # allow HTTP traffic on port 80 from IPv4 addresses
                     'FromPort': 80,
                     'ToPort': 80,
                     'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
-                    {'IpProtocol': 'tcp',
+                    {'IpProtocol': 'tcp', # allow SSH traffic on port 22 from IPv4 adddresses
                     'FromPort': 22,
                     'ToPort': 22,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]} # CidrIp is the IP range it allows so in this case it's any IP
                 ]
         )
     
     def create_vpc(self):
         try:
-            vpc = self.ec2_client.create_vpc(CidrBlock='10.10.0.0/16')
-            self.vpc_id = vpc['Vpc']['VpcId']
+            vpc = self.ec2_client.create_vpc(CidrBlock='10.10.0.0/16') # CidrBlock is range of IPv4 addresses so it will have 256 * 256 addresses in its range
+            self.vpc_id = vpc['Vpc']['VpcId'] # vpc is basically a network of your own within AWS
 
             # attach internet gateway
-            gateway = self.ec2_client.create_internet_gateway()
+            gateway = self.ec2_client.create_internet_gateway() # gateway allows communication between the VPC and the internet
             self.igw_id = gateway['InternetGateway']['InternetGatewayId']
             self.ec2_client.attach_internet_gateway(InternetGatewayId = self.igw_id, VpcId = self.vpc_id)
 
             # get route table and create a route
             route_table = self.ec2_client.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [self.vpc_id]}])
             self.rt_id = route_table['RouteTables'][0]['RouteTableId']
-            route = self.ec2_client.create_route(
+            route = self.ec2_client.create_route( # rule to direct where network traffic from gateway is directed 
                 DestinationCidrBlock='0.0.0.0/0',
                 GatewayId = self.igw_id,
                 RouteTableId=self.rt_id
             )
             # create subnet and store its ID
-            subnet_resp = self.ec2_client.create_subnet(VpcId=self.vpc_id, CidrBlock='10.10.1.0/24')
+            subnet_resp = self.ec2_client.create_subnet(VpcId=self.vpc_id, CidrBlock='10.10.1.0/24') # smaller network within VPC so it's more efficient and you can specify rules within it
             self.subnet_id = subnet_resp['Subnet']['SubnetId']
         except Exception as e:
             print(e)
@@ -114,9 +114,9 @@ class EC2():
             key_pair_resp = self.create_key_pair()
 
             # Allocate Elastic IP address to AWS account
-            elastic_ip = self.ec2_client.allocate_address(Domain='vpc')
-            self.public_ip = elastic_ip['PublicIp']
-            self.allocation_id = elastic_ip['AllocationId']
+            elastic_ip = self.ec2_client.allocate_address(Domain='vpc') # elastic IP address specific to my AWS account so that I can associate it with network interface 
+            self.public_ip = elastic_ip['PublicIp'] # the elastic IP
+            self.allocation_id = elastic_ip['AllocationId'] # the ID that AWS assigns to represent the allocation of the elastic IP address for use with instances in the VPC
 
             # set subnet
             subnet = self.ec2_resource.Subnet(self.subnet_id)
@@ -129,17 +129,17 @@ class EC2():
             # associate elastic IP address 
             self.network_interface_id = self.network_interface.id
             self.ec2_client.associate_address(AllocationId=self.allocation_id,
-                                              NetworkInterfaceId=self.network_interface_id)
+                                              NetworkInterfaceId=self.network_interface_id) # basically connects the elastic IP address and security group together within the VPC
 
             # Parse volumes and store in list to use for BlockDeviceMappings when creating instance
-            BlockDeviceMappings = []
+            BlockDeviceMappings = [] # defines block devices (volumes) to attach to instance
             for vol in self.volumes:
                 block_device = {
                     'DeviceName': vol['device'],
-                    'Ebs':
+                    'Ebs': # EBS is basically a storage device that is being attached to your instance virtually
                     {
                         'VolumeSize': vol['size_gb'],
-                        'DeleteOnTermination': True
+                        'DeleteOnTermination': True # deletes volume when instance is terminated
                     }
                 }
                 BlockDeviceMappings.append(block_device)
@@ -150,16 +150,16 @@ class EC2():
                 self.userData += 'sudo mount -o rw' + vol['device'] + ' ' + vol['mount'] + '\n'
 
             # create public key based off .pem file and store contents in user_key
-            user_public_key = os.popen(f'ssh-keygen -y -f ' + self.name + '_KEY.pem').readlines()
-            user_key = user_public_key[0].strip("\n")
+            user_public_key = os.popen(f'ssh-keygen -y -f ' + self.name + '_KEY.pem').readlines() # os.popen opens pipe to or from command so in this case it's opening file and reading it
+            user_key = user_public_key[0].strip("\n") # there is a return statement at the end of the key that we need to strip otherwise it messes up in the remote machine
 
             # add users and allow them SSH access
             for user in self.users:
                 username = user['login']
-                self.userData += 'adduser ' + username + '\n'
-                echo_cmd = 'echo ' + '\\\"' + username + ' ALL=(ALL) NOPASSWD:ALL\\\" >> /etc/sudoers.d/cloud_init'
-                self.userData += 'sudo sh -c \"' + echo_cmd + '\"\n'
-                self.userData += 'mkdir /home/' + username + '/.ssh\n'
+                self.userData += 'adduser ' + username + '\n' # create user
+                echo_cmd = 'echo ' + '\\\"' + username + ' ALL=(ALL) NOPASSWD:ALL\\\" >> /etc/sudoers.d/cloud_init' # adds username to sudoers file
+                self.userData += 'sudo sh -c \"' + echo_cmd + '\"\n' # executes the sudoers command on the machine
+                self.userData += 'mkdir /home/' + username + '/.ssh\n' # creates ssh directory for user
                 # put public key content in authorized_keys
                 cmd = 'echo ' + user_key + ' >> /home/' + username + '/.ssh/authorized_keys'
                 self.userData += 'sudo sh -c \"' + cmd + '\"\n'
